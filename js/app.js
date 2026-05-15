@@ -11,10 +11,24 @@
  */
 
 // ── Config ────────────────────────────────────────────────────────────────────
-// Gunakan host:port yang sama dengan halaman saat ini — tidak hardcode.
-const API_BASE = `${location.protocol}//${location.host}`;
-const WS_PROTO = location.protocol === 'https:' ? 'wss' : 'ws';
-const WS_URL   = `${WS_PROTO}://${location.host}/ws/predict`;
+// Prioritas backend:
+// 1) query param ?api=https://your-backend
+// 2) localStorage: ihear_api
+// 3) origin saat ini
+const API_QUERY = new URLSearchParams(location.search).get('api');
+const API_OVERRIDE = (API_QUERY || localStorage.getItem('ihear_api') || '').trim();
+const DEFAULT_BASE = `${location.protocol}//${location.host}`;
+const API_BASE = API_OVERRIDE ? API_OVERRIDE.replace(/\/+$/, '') : DEFAULT_BASE;
+
+let apiUrl;
+try {
+  apiUrl = new URL(API_BASE);
+} catch {
+  apiUrl = new URL(DEFAULT_BASE);
+}
+
+const WS_URL = `${apiUrl.protocol === 'https:' ? 'wss' : 'ws'}://${apiUrl.host}/ws/predict`;
+const IS_GH_PAGES = location.hostname.endsWith('github.io');
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let ws = null, useWS = false;
@@ -791,6 +805,11 @@ async function loadClasses() {
 // 12. INIT
 // ═══════════════════════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
+  if (IS_GH_PAGES && !API_OVERRIDE) {
+    setChip($('chip-ws'), '⚠ Backend belum dikonfigurasi', 'error');
+    showHint('⚠ Tambahkan ?api=https://backend-anda atau jalankan lokal');
+    return;
+  }
   checkBackend();
   connectWS();
 });
