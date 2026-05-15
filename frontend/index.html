@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IHearYou — Translasi BISINDO Real-Time</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-brand">
+    <span class="brand-logo">IHear<span>You</span></span>
+    <span class="brand-sub">Sistem Translasi Bahasa Isyarat BISINDO</span>
+  </div>
+  <div class="header-chips">
+    <span class="chip" id="chip-acc">— %</span>
+    <span class="chip" id="chip-classes">— kelas</span>
+    <span class="chip chip--ws" id="chip-ws">Menyambungkan…</span>
+  </div>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="translate">👋 Sign-to-Speech</button>
+  <button class="tab-btn" data-tab="gesture">🧠 Gesture Learning</button>
+  <button class="tab-btn" data-tab="stt">🎤 Speech-to-Text</button>
+</div>
+
+<main class="layout">
+
+  <!-- TAB 1: Sign-to-Speech -->
+  <div id="tab-translate" class="tab-content active">
+    <div class="two-col">
+
+      <div class="col-left">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title"><span class="dot dot--blue anim-pulse" id="cam-dot"></span>Fitur 1 — Sign-to-Speech</span>
+            <span class="badge" id="latency-badge">— ms</span>
+          </div>
+          <div class="camera-wrap" id="camera-wrap">
+            <video id="camera-feed" autoplay playsinline></video>
+            <canvas id="output-canvas"></canvas>
+            <span class="brk tl"></span><span class="brk tr"></span>
+            <span class="brk bl"></span><span class="brk br"></span>
+            <div class="scan-line" id="scan-line"></div>
+            <div class="cam-overlay" id="cam-overlay">
+              <div class="cam-icon">📷</div>
+              <p>Meminta akses kamera…</p>
+            </div>
+          </div>
+          <div class="cam-controls">
+            <div class="ctrl-group">
+              <label class="ctrl-lbl">Scan otomatis</label>
+              <select id="scan-interval" class="ctrl-sel">
+                <option value="500">Setiap 0,5 dtk (cepat)</option>
+                <option value="1000" selected>Setiap 1 dtk</option>
+                <option value="1500">Setiap 1,5 dtk</option>
+                <option value="2000">Setiap 2 dtk</option>
+                <option value="3000">Setiap 3 dtk</option>
+                <option value="0">Manual saja</option>
+              </select>
+            </div>
+          </div>
+          <div class="result-panel" id="conf-card" style="display:none">
+            <div class="result-main is-empty" id="current-word">—</div>
+            <div class="conf-row">
+              <span class="conf-lbl">Confidence: <strong id="conf-pct">0%</strong></span>
+              <div class="conf-bar"><div class="conf-fill" id="conf-fill"></div></div>
+            </div>
+            <div id="top5-output" class="top5-wrap"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-right">
+        <div class="card card--sentence">
+          <div class="card-head">
+            <span class="card-title"><span class="dot dot--green"></span>Kalimat Terbentuk</span>
+            <div style="display:flex;gap:.4rem">
+              <button class="btn-sm" id="btn-speak-sentence">🔊 Suarakan</button>
+              <button class="btn-sm btn-sm--muted" id="btn-clear-sentence">✕ Hapus</button>
+            </div>
+          </div>
+          <div class="sentence-box" id="sentence-box">
+            <span class="s-placeholder" id="sent-ph">Tunjukkan isyarat… kata tersusun otomatis</span>
+            <span id="sentence-output"></span>
+          </div>
+          <div class="word-chips" id="word-chips"></div>
+        </div>
+
+        <div class="card card--grow">
+          <div class="card-head">
+            <span class="card-title"><span class="dot dot--blue"></span>Riwayat Translasi</span>
+            <button class="btn-link" id="btn-clear-history">Hapus</button>
+          </div>
+          <div class="history-list" id="history-list">
+            <div class="list-empty">Belum ada translasi</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="card-title"><span class="dot dot--purple"></span>Performa Model</span></div>
+          <div class="metrics-grid">
+            <div class="metric"><div class="metric-val" id="m-acc">—</div><div class="metric-lbl">Test Accuracy</div></div>
+            <div class="metric"><div class="metric-val" id="m-f1">—</div><div class="metric-lbl">Macro-F1</div></div>
+            <div class="metric"><div class="metric-val" id="m-top5">—</div><div class="metric-lbl">Top-5</div></div>
+            <div class="metric"><div class="metric-val" id="m-kelas">—</div><div class="metric-lbl">Kelas</div></div>
+          </div>
+          <div class="arch-note" id="model-info-output">Memuat…</div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="card-title"><span class="dot dot--green"></span>Kosakata Tersedia</span></div>
+          <div class="vocab-cloud" id="vocab-cloud"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB 2: Gesture Learning -->
+  <div id="tab-gesture" class="tab-content">
+    <div class="two-col">
+
+      <div class="col-left">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title"><span class="dot dot--amber anim-pulse" id="gl-dot"></span>Gesture Learning</span>
+            <span class="badge badge--amber" id="gl-badge">Standby</span>
+          </div>
+          <div class="camera-wrap" id="gl-camera-wrap">
+            <video id="gl-feed" autoplay playsinline></video>
+            <canvas id="gl-canvas"></canvas>
+            <span class="brk tl"></span><span class="brk tr"></span>
+            <span class="brk bl"></span><span class="brk br"></span>
+            <div class="scan-line" id="gl-scan"></div>
+            <div class="cam-overlay" id="gl-overlay">
+              <div class="cam-icon">📷</div>
+              <p>Klik tab ini untuk mengaktifkan kamera</p>
+            </div>
+            <div class="rec-overlay" id="rec-overlay" style="display:none">
+              <span class="rec-dot"></span>
+              <span id="rec-label">Merekam…</span>
+              <span id="rec-frames">0 frame</span>
+            </div>
+          </div>
+          <div class="cam-controls">
+            <input type="text" id="gl-label" class="g-input" placeholder="Nama gesture (misal: halo)">
+            <div class="g-btns">
+              <button id="btn-rec-start" class="g-btn g-btn--rec">⏺ Mulai Rekam</button>
+              <button id="btn-rec-stop"  class="g-btn g-btn--stop" style="display:none">⏹ Stop Rekam</button>
+              <button id="btn-gl-recog"  class="g-btn g-btn--recog">🎯 Kenali Gesture</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-right">
+        <div class="card card--sentence">
+          <div class="card-head">
+            <span class="card-title"><span class="dot dot--amber"></span>Hasil Pengenalan Gesture</span>
+            <div style="display:flex;gap:.4rem">
+              <button class="btn-sm" id="btn-speak-gl">🔊 Suarakan</button>
+              <button class="btn-sm btn-sm--muted" id="btn-clear-gl">✕ Hapus</button>
+            </div>
+          </div>
+          <div class="sentence-box" id="gl-sent-box">
+            <span class="s-placeholder" id="gl-ph">Rekam gesture lalu klik Kenali…</span>
+            <span id="gl-sent-output"></span>
+          </div>
+          <div class="word-chips" id="gl-word-chips"></div>
+        </div>
+
+        <div class="card card--grow">
+          <div class="card-head">
+            <span class="card-title"><span class="dot dot--amber"></span>Gesture Tersimpan</span>
+            <button class="btn-link" id="btn-refresh-gl">↺ Refresh</button>
+          </div>
+          <div class="gesture-list-wrap" id="gesture-list">
+            <div class="list-empty">Belum ada gesture</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="card-title"><span class="dot dot--amber"></span>Panduan</span></div>
+          <div class="info-steps">
+            <div class="step"><span class="step-n">1</span><span>Ketik nama gesture</span></div>
+            <div class="step"><span class="step-n">2</span><span>Pose ke kamera → klik <b>Mulai Rekam</b></span></div>
+            <div class="step"><span class="step-n">3</span><span>Tahan 2–3 detik → klik <b>Stop</b></span></div>
+            <div class="step"><span class="step-n">4</span><span>Klik <b>Kenali Gesture</b> → pose → sistem mendeteksi</span></div>
+            <div class="step"><span class="step-n">5</span><span>Gesture juga masuk ke model translasi utama</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB 3: Speech-to-Text -->
+  <div id="tab-stt" class="tab-content">
+    <div class="stt-layout">
+      <div class="card card--stt">
+        <div class="card-head">
+          <span class="card-title"><span class="dot dot--green anim-pulse"></span>Fitur 2 — Speech-to-Text</span>
+          <span class="badge badge--green" id="stt-engine-badge">Web Speech API</span>
+        </div>
+        <div class="stt-body">
+          <div class="transcript-box" id="transcript-box">
+            <span class="t-placeholder" id="t-ph">Bicara dalam Bahasa Indonesia… mikrofon aktif otomatis.</span>
+            <span id="transcript-output"></span>
+          </div>
+          <div class="stt-footer">
+            <span class="stt-status" id="stt-status">Menginisialisasi…</span>
+            <div class="stt-actions">
+              <button class="btn-sm" id="btn-speak-transcript">🔊 Ucapkan</button>
+              <button class="btn-sm btn-sm--muted" id="btn-clear-transcript">✕ Hapus</button>
+              <button class="btn-sm" id="btn-copy-transcript">📋 Salin</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:460px">
+        <div class="card-head"><span class="card-title"><span class="dot dot--green"></span>Tentang Fitur Ini</span></div>
+        <div style="padding:.875rem 1.1rem;font-size:.83rem;color:var(--muted);line-height:1.75">
+          <p>Menggunakan <strong>Web Speech API</strong> (primer, berjalan di browser) dengan <strong>Whisper OpenAI</strong> sebagai fallback melalui server untuk akurasi lebih tinggi.</p>
+          <br>
+          <p>Output teks memungkinkan penyandang tunarungu dan tunawicara memahami komunikasi verbal secara real-time.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MediaPipe pinned version 0.5.1675471629 — stabil, assets CDN valid -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1675466124/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5.1675471629/holistic.js" crossorigin="anonymous"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

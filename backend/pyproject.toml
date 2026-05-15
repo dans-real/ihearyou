@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ihear-you-backend"
+version = "0.1.0"
+description = "IHearYou backend service for BISINDO real-time translation"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+  { name = "IHearYou Team" }
+]
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.32.0",
+  "websockets>=13.1",
+  "numpy>=2.1.0",
+  "python-multipart>=0.0.9",
+  "pydantic-settings>=2.6.0",
+  "torch>=2.5.0",
+  "mediapipe>=0.10.0",
+  "transformers>=4.46.0",
+  "opencv-python>=4.10.0",
+  "scikit-learn>=1.5.0",
+  "scikit-image>=0.24.0"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.0",
+  "ruff>=0.7.0",
+  "black>=24.10.0"
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
